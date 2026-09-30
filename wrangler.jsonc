@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "motihime",
+  "main": "gemini-proxy-worker.js",
+  "compatibility_date": "2026-09-30",
+  "vars": {
+    "ALLOWED_ORIGINS": "https://sithigh21147.github.io",
+    "ALLOWED_MODELS": "gemini-3.5-flash-lite,gemini-3.5-flash"
+  }
+}
