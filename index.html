@@ -91,6 +91,23 @@
         .help-content { text-align: left; }
         .help-content h2 { color: var(--primary-color); font-size: 1.1rem; margin: 20px 0 6px; }
         .help-content p, .help-content li { font-size: 0.95rem; }
+        .settings-panel, .history-panel {
+            margin-top: 28px; padding-top: 24px; border-top: 2px solid var(--primary-color);
+        }
+        .settings-panel > h2, .history-panel > h2 { color: var(--primary-color); }
+        .mode-button-wrap { position: relative; }
+        .mode-button-wrap button[data-unavailable="true"] { opacity: 0.6; cursor: help; }
+        .offline-message {
+            min-height: 1.5em; margin: -4px 0 8px; color: #b3261e; font-size: 0.9rem;
+        }
+        .history-entry, .result-entry {
+            margin: 12px 0; padding: 14px; border: 1px solid #ddd; border-radius: 6px;
+            text-align: left; background: #fcfbf8;
+        }
+        .history-entry summary { cursor: pointer; font-weight: bold; color: var(--primary-color); }
+        .history-entry p, .result-entry p { margin: 6px 0; white-space: pre-wrap; }
+        .result-total { font-size: 1.25rem; font-weight: bold; color: var(--primary-color); }
+        .grading-wait { color: #666; }
     </style>
 </head>
 <body>
@@ -100,26 +117,26 @@
                 <button onclick="app.openHelp()" class="help-btn">？ Help</button>
             </div>
             <h1>メニュー</h1>
-            <p id="mode-status"></p>
-            <p id="data-status" style="font-weight: bold; color: var(--primary-color);"></p>
-            <p id="subject-status"></p>
             <button onclick="app.startMode('choice')">3択クイズモード</button>
-            <button id="desc-btn" onclick="app.startMode('desc')">記述演習モード（AI接続が必要）</button>
+            <div class="mode-button-wrap" onmouseenter="app.showOfflineNotice()" onmouseleave="app.hideOfflineNotice()">
+                <button id="desc-btn" onclick="app.requestDescMode()">記述演習モード</button>
+            </div>
+            <p id="offline-message" class="offline-message" aria-live="polite"></p>
             <button onclick="app.openSettings()" class="secondary-btn">設定</button>
-        </div>
+            <button onclick="app.toggleHistory()" class="muted-btn">学習履歴を見る</button>
 
-        <div id="settings-screen" class="screen hidden">
-            <h1>設定</h1>
+        <section id="settings-panel" class="settings-panel hidden">
+            <h2>設定</h2>
 
             <div class="settings-card">
-                <h2>AI接続・モデル（通常は変更不要）</h2>
+                <h2>AI接続・モデル</h2>
                 <div class="input-group">
                     <label for="ai-provider">AI接続先:</label>
                     <select id="ai-provider" onchange="app.onProviderChange()">
-                        <option value="gemini-proxy">共有Gemini（利用者のキー不要）</option>
-                        <option value="gemini">自分のGemini APIキーを使用</option>
-                        <option value="ollama">Ollama（ローカルLLM）</option>
-                        <option value="lmstudio">LM Studio（ローカルLLM）</option>
+                        <option value="gemini-proxy">共有Gemini</option>
+                        <option value="gemini">自分のGemini APIキー</option>
+                        <option value="ollama">Ollama</option>
+                        <option value="lmstudio">LM Studio</option>
                         <option value="openai-compatible">OpenAI互換API</option>
                         <option value="offline">AIを使用しない</option>
                     </select>
@@ -184,8 +201,15 @@
                 <button onclick="app.resetDefaultData()" class="muted-btn">配布されたデフォルト問題に戻す</button>
             </div>
 
-            <button onclick="app.saveSettingsAndReturn()">設定を反映してメニューに戻る</button>
-            <button onclick="app.returnToMenu()" class="muted-btn">変更せずメニューに戻る</button>
+            <button onclick="app.saveSettingsAndReturn()">設定を反映</button>
+            <button onclick="app.closeSettings()" class="muted-btn">設定を閉じる</button>
+        </section>
+
+        <section id="history-panel" class="history-panel hidden">
+            <h2>学習履歴</h2>
+            <div id="history-list"></div>
+            <button onclick="app.toggleHistory()" class="muted-btn">履歴を閉じる</button>
+        </section>
         </div>
 
         <div id="help-screen" class="screen hidden">
@@ -198,13 +222,16 @@
                 <p>「設定」からCSVを選んで適用すると、この端末ではその問題が優先されます。「配布されたデフォルト問題に戻す」で元に戻せます。</p>
 
                 <h2>AI接続</h2>
-                <p>通常は共有Geminiを使用するため、APIキーの入力は不要です。初回または認証期限切れのときは、設定画面の「学校メールで共有Geminiにログイン」を押して認証してください。接続できない場合は「AI接続を確認」を試してください。</p>
+                <p>通常は共有Geminiを使用するため、APIキーの入力は不要です。初回または認証期限切れのときは、メニュー下の設定にある「学校メールで共有Geminiにログイン」を押して認証してください。接続できない場合は「AI接続を確認」を試してください。</p>
 
                 <h2>ローカルLLM</h2>
                 <p>OllamaやLM Studioを選ぶ場合は、この端末でローカルサーバーを起動してから「利用可能なモデル一覧を取得」してください。</p>
 
                 <h2>オフライン利用</h2>
                 <p>AIを使用しない設定では、問題データに収録済みの選択肢で3択演習ができます。記述採点は利用できません。</p>
+
+                <h2>学習履歴</h2>
+                <p>終了した学習はこの端末のブラウザ内に最大50回分保存されます。メニューの「学習履歴を見る」から確認できます。</p>
             </div>
             <button onclick="app.returnToMenu()">メニューに戻る</button>
         </div>
@@ -234,6 +261,8 @@
         <div id="result-screen" class="screen hidden">
             <h1>学習終了</h1>
             <div id="final-score" class="score-display"></div>
+            <div id="final-summary"></div>
+            <div id="final-details"></div>
             <button onclick="app.returnToMenu()">メニューに戻る</button>
         </div>
     </div>
@@ -266,6 +295,8 @@
 
         const defaultQuizFile = "questions.csv";
         const customQuizStorageKey = "mochihime_custom_quiz_csv_v1";
+        const learningHistoryStorageKey = "mochihime_learning_history_v1";
+        const maxHistoryEntries = 50;
 
         const sharedGeminiProxyUrl = "https://motihime.opop2gogo.workers.dev";
 
@@ -330,6 +361,10 @@
             score: 0,
             mode: "",
             correctIndex: 0,
+            currentChoices: [],
+            sessionResults: [],
+            sessionStartedAt: "",
+            availableModels: [],
 
             async initialize() {
                 this.quizData = defaultQuizData;
@@ -350,6 +385,9 @@
                     this.quizData = defaultQuizData;
                     this.dataLabel = "内蔵の予備問題データ";
                 }
+                this.writeAISettingsForm(this.getCurrentAISettings());
+                document.getElementById('subject-profile').value = this.subjectProfile;
+                await this.loadAvailableModels(true, true);
                 this.updateMenuStatus();
             },
 
@@ -668,12 +706,12 @@ loc,q,ans,memo,dist1,dist2,dist3
                     const option = document.createElement('option');
                     option.value = model;
                     const labels = {
-                        "gemini-3.8-flash": "Gemini 3.8 Flash（最新・高精度）",
-                        "gemini-3.7-flash": "Gemini 3.7 Flash（高精度）",
-                        "gemini-3.6-flash": "Gemini 3.6 Flash（バランス）",
-                        "gemini-3.5-flash": "Gemini 3.5 Flash（旧世代）",
-                        "gemini-3.5-flash-lite": "Gemini 3.5 Flash-Lite（速度優先）",
-                        "gemini-3.1-flash-lite": "Gemini 3.1 Flash-Lite（軽量）"
+                        "gemini-3.8-flash": "Gemini 3.8 Flash",
+                        "gemini-3.7-flash": "Gemini 3.7 Flash",
+                        "gemini-3.6-flash": "Gemini 3.6 Flash",
+                        "gemini-3.5-flash": "Gemini 3.5 Flash",
+                        "gemini-3.5-flash-lite": "Gemini 3.5 Flash-Lite",
+                        "gemini-3.1-flash-lite": "Gemini 3.1 Flash-Lite"
                     };
                     option.innerText = labels[model] || model;
                     select.appendChild(option);
@@ -685,10 +723,21 @@ loc,q,ans,memo,dist1,dist2,dist3
                 document.getElementById('ai-provider').value = settings.provider;
                 document.getElementById('settings-api-key').value = settings.apiKey || "";
                 document.getElementById('ai-base-url').value = settings.baseUrl || "";
-                const models = this.getPresetModels(settings.provider);
+                const models = settings.provider === this.aiProvider && this.availableModels.length
+                    ? this.availableModels
+                    : this.getPresetModels(settings.provider);
                 this.setModelOptions('choice-model', models, settings.choiceModel || "");
                 this.setModelOptions('grading-model', models, settings.gradingModel || "");
                 this.updateProviderFields();
+            },
+
+            selectLatestFlashModels(models) {
+                const sorted = [...new Set(models || [])].sort((a, b) =>
+                    b.localeCompare(a, undefined, { numeric: true, sensitivity: "base" })
+                );
+                const latestLite = sorted.find(model => /gemini-/i.test(model) && /flash-lite/i.test(model));
+                const latestFlash = sorted.find(model => /gemini-/i.test(model) && /flash/i.test(model) && !/flash-lite/i.test(model));
+                return { latestLite, latestFlash };
             },
 
             readAISettingsForm() {
@@ -727,7 +776,7 @@ loc,q,ans,memo,dist1,dist2,dist3
                 }
             },
 
-            onProviderChange() {
+            async onProviderChange() {
                 const provider = document.getElementById('ai-provider').value;
                 const preset = providerPresets[provider];
                 if (preset) {
@@ -739,22 +788,27 @@ loc,q,ans,memo,dist1,dist2,dist3
                 }
                 document.getElementById('ai-settings-status').innerText = "";
                 this.updateProviderFields();
+                if (provider !== "offline") await this.loadAvailableModels(true);
             },
 
-            resetAISettingsForm() {
+            async resetAISettingsForm() {
                 this.writeAISettingsForm({ ...defaultAISettings });
+                await this.loadAvailableModels(true, true);
                 const status = document.getElementById('ai-settings-status');
                 status.classList.remove('danger-text');
-                status.innerText = "AI接続先とモデルをデフォルトに戻しました。反映するには下の保存ボタンを押してください。";
+                status.innerText = "AI接続先を戻し、利用可能な最新のFlash-LiteとFlashを選択しました。";
             },
 
             resetModelsForProvider() {
                 const provider = document.getElementById('ai-provider').value;
                 const preset = providerPresets[provider];
                 if (!preset) return;
-                const models = this.getPresetModels(provider);
-                this.setModelOptions('choice-model', models, preset.choiceModel);
-                this.setModelOptions('grading-model', models, preset.gradingModel);
+                const models = provider === this.aiProvider && this.availableModels.length
+                    ? this.availableModels
+                    : this.getPresetModels(provider);
+                const latest = this.selectLatestFlashModels(models);
+                this.setModelOptions('choice-model', models, latest.latestLite || preset.choiceModel);
+                this.setModelOptions('grading-model', models, latest.latestFlash || preset.gradingModel);
                 const status = document.getElementById('ai-settings-status');
                 status.classList.remove('danger-text');
                 status.innerText = provider === "lmstudio"
@@ -776,12 +830,12 @@ loc,q,ans,memo,dist1,dist2,dist3
                 status.innerText = "新しいタブで学校メール認証を完了してから、AI接続を確認してください。";
             },
 
-            async loadAvailableModels() {
+            async loadAvailableModels(autoSelectLatest = false, silent = false) {
                 const status = document.getElementById('ai-settings-status');
                 const button = document.getElementById('load-models-btn');
                 const settings = this.readAISettingsForm();
                 status.classList.remove('danger-text');
-                status.innerText = "モデル一覧を取得しています...";
+                if (!silent) status.innerText = "モデル一覧を取得しています...";
                 button.disabled = true;
                 try {
                     let models = [];
@@ -811,12 +865,26 @@ loc,q,ans,memo,dist1,dist2,dist3
                     if (!models.length) throw new Error("利用可能なモデルが見つかりませんでした。");
                     const currentChoice = document.getElementById('choice-model').value;
                     const currentGrading = document.getElementById('grading-model').value;
-                    this.setModelOptions('choice-model', models, models.includes(currentChoice) ? currentChoice : "");
-                    this.setModelOptions('grading-model', models, models.includes(currentGrading) ? currentGrading : "");
-                    status.innerText = `${models.length}件のモデルを取得しました。`;
+                    let selectedChoice = models.includes(currentChoice) ? currentChoice : "";
+                    let selectedGrading = models.includes(currentGrading) ? currentGrading : "";
+                    if (autoSelectLatest && ["gemini", "gemini-proxy"].includes(settings.provider)) {
+                        const { latestLite, latestFlash } = this.selectLatestFlashModels(models);
+                        selectedChoice = latestLite || selectedChoice;
+                        selectedGrading = latestFlash || selectedGrading;
+                    }
+                    this.setModelOptions('choice-model', models, selectedChoice);
+                    this.setModelOptions('grading-model', models, selectedGrading);
+                    if (settings.provider === this.aiProvider) this.availableModels = [...models];
+                    if (autoSelectLatest && settings.provider === this.aiProvider) {
+                        this.choiceModel = document.getElementById('choice-model').value;
+                        this.gradingModel = document.getElementById('grading-model').value;
+                    }
+                    if (!silent) status.innerText = `${models.length}件のモデルを取得しました。`;
                 } catch (e) {
-                    status.classList.add('danger-text');
-                    status.innerText = `モデル一覧を取得できませんでした: ${e.message}`;
+                    if (!silent) {
+                        status.classList.add('danger-text');
+                        status.innerText = `モデル一覧を取得できませんでした: ${e.message}`;
+                    }
                 } finally {
                     button.disabled = false;
                 }
@@ -871,7 +939,14 @@ loc,q,ans,memo,dist1,dist2,dist3
                 document.getElementById('settings-data-status').innerText = `${this.dataLabel}: ${this.quizData.length}問`;
                 document.getElementById('copy-status').innerText = "";
                 document.getElementById('ai-settings-status').innerText = "";
-                this.showScreen('settings-screen');
+                document.getElementById('history-panel').classList.add('hidden');
+                const panel = document.getElementById('settings-panel');
+                panel.classList.remove('hidden');
+                panel.scrollIntoView({ behavior: "smooth", block: "start" });
+            },
+
+            closeSettings() {
+                document.getElementById('settings-panel').classList.add('hidden');
             },
 
             async applyProblemData() {
@@ -922,28 +997,101 @@ loc,q,ans,memo,dist1,dist2,dist3
                 this.choiceModel = settings.choiceModel;
                 this.gradingModel = settings.gradingModel;
                 this.subjectProfile = document.getElementById('subject-profile').value;
+                this.availableModels = Array.from(document.getElementById('choice-model').options).map(option => option.value).filter(Boolean);
                 this.updateMenuStatus();
-                this.showScreen('menu-screen');
+                this.closeSettings();
             },
 
             updateMenuStatus() {
-                const status = document.getElementById('mode-status');
-                const dataStatus = document.getElementById('data-status');
-                const subjectStatus = document.getElementById('subject-status');
                 const descBtn = document.getElementById('desc-btn');
+                const unavailable = !this.isAIEnabled();
+                descBtn.dataset.unavailable = unavailable ? 'true' : 'false';
+                descBtn.title = unavailable ? "オフラインでは使用できません" : "";
+                if (!unavailable) this.hideOfflineNotice();
+            },
 
-                if (this.isAIEnabled()) {
-                    const connectionType = ["ollama", "lmstudio"].includes(this.aiProvider) ? "ローカルAI" : "オンラインAI";
-                    status.innerText = `🤖 ${connectionType}: ${this.getProviderName()}（選択肢: ${this.choiceModel} / 採点: ${this.gradingModel}）`;
-                    descBtn.disabled = false;
-                } else {
-                    status.innerText = this.aiProvider === "gemini-proxy" && !this.aiBaseUrl
-                        ? "⚠️ 共有Geminiの接続URLが未設定です（現在は3択のみ）"
-                        : "📴 オフラインモード（記述不可 / 収録済み選択肢を使用）";
-                    descBtn.disabled = true;
+            requestDescMode() {
+                if (!this.isAIEnabled()) {
+                    this.showOfflineNotice();
+                    return;
                 }
-                dataStatus.innerText = `📘 ${this.dataLabel}: ${this.quizData.length}問`;
-                subjectStatus.innerText = `科目プロファイル: ${this.getSubjectName()}`;
+                this.startMode('desc');
+            },
+
+            showOfflineNotice() {
+                if (!this.isAIEnabled()) {
+                    document.getElementById('offline-message').innerText = "オフラインでは使用できません";
+                }
+            },
+
+            hideOfflineNotice() {
+                document.getElementById('offline-message').innerText = "";
+            },
+
+            getLearningHistory() {
+                try {
+                    const saved = JSON.parse(localStorage.getItem(learningHistoryStorageKey) || "[]");
+                    return Array.isArray(saved) ? saved : [];
+                } catch (e) {
+                    console.warn("学習履歴を読み込めませんでした:", e);
+                    return [];
+                }
+            },
+
+            saveLearningHistory(entry) {
+                try {
+                    const history = this.getLearningHistory();
+                    history.unshift(entry);
+                    localStorage.setItem(learningHistoryStorageKey, JSON.stringify(history.slice(0, maxHistoryEntries)));
+                } catch (e) {
+                    console.warn("学習履歴を保存できませんでした:", e);
+                }
+            },
+
+            escapeHTML(value) {
+                return String(value ?? "").replace(/[&<>"']/g, char => ({
+                    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+                })[char]);
+            },
+
+            toggleHistory() {
+                const panel = document.getElementById('history-panel');
+                const willOpen = panel.classList.contains('hidden');
+                document.getElementById('settings-panel').classList.add('hidden');
+                panel.classList.toggle('hidden', !willOpen);
+                if (willOpen) {
+                    this.renderHistory();
+                    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+            },
+
+            renderHistory() {
+                const list = document.getElementById('history-list');
+                const history = this.getLearningHistory();
+                if (!history.length) {
+                    list.innerHTML = "<p>まだ学習履歴はありません。</p>";
+                    return;
+                }
+                list.innerHTML = history.map(entry => {
+                    const date = new Date(entry.completedAt).toLocaleString("ja-JP");
+                    const modeName = entry.mode === "desc" ? "記述演習" : "3択クイズ";
+                    const resultText = entry.mode === "desc"
+                        ? `${this.escapeHTML(entry.totalScore)} / ${this.escapeHTML(entry.maxScore)}点　平均 ${this.escapeHTML(entry.averageScore)}点`
+                        : `${this.escapeHTML(entry.totalScore)} / ${this.escapeHTML(entry.maxScore)}問正解`;
+                    const details = (entry.results || []).map((result, index) => {
+                        const outcome = entry.mode === "desc"
+                            ? `${this.escapeHTML(result.score)}点 ${this.escapeHTML(result.judgment)}`
+                            : (result.correct ? "正解" : "不正解");
+                        const answer = entry.mode === "desc" && result.userAnswer
+                            ? `<p><strong>自分の回答:</strong> ${this.escapeHTML(result.userAnswer)}</p>`
+                            : "";
+                        const comment = result.comment
+                            ? `<p><strong>講評:</strong> ${this.escapeHTML(result.comment)}</p>`
+                            : "";
+                        return `<div class="result-entry"><p><strong>${index + 1}. ${this.escapeHTML(result.question)}</strong></p><p>${outcome}</p>${answer}${comment}</div>`;
+                    }).join("");
+                    return `<details class="history-entry"><summary>${date}　${modeName}　${resultText}</summary><p>${this.escapeHTML(entry.subject)} / ${this.escapeHTML(entry.dataLabel)}</p><p>${this.escapeHTML(entry.summary || "")}</p>${details}</details>`;
+                }).join("");
             },
 
             parseCSV(csvText) {
@@ -1019,9 +1167,17 @@ loc,q,ans,memo,dist1,dist2,dist3
             },
 
             async startMode(m) {
+                if (m === 'desc' && !this.isAIEnabled()) {
+                    this.showOfflineNotice();
+                    return;
+                }
                 this.mode = m;
                 this.currentIndex = 0;
                 this.score = 0;
+                this.sessionResults = [];
+                this.sessionStartedAt = new Date().toISOString();
+                document.getElementById('settings-panel').classList.add('hidden');
+                document.getElementById('history-panel').classList.add('hidden');
                 this.showScreen('quiz-screen');
                 await this.loadQuestion();
             },
@@ -1032,6 +1188,9 @@ loc,q,ans,memo,dist1,dist2,dist3
                 document.getElementById('progress').innerText = `${this.currentIndex + 1} / ${this.quizData.length}問${locText}`;
                 document.getElementById('question-text').innerText = data.q;
                 document.getElementById('feedback').classList.add('hidden');
+                document.getElementById('result-label').innerText = "";
+                document.getElementById('explanation').innerText = "";
+                document.getElementById('next-btn').classList.remove('hidden');
                 document.getElementById('user-answer').value = "";
                 document.getElementById('submit-desc-btn').disabled = false;
 
@@ -1093,6 +1252,7 @@ loc,q,ans,memo,dist1,dist2,dist3
                 // シャッフル処理
                 const mapped = finalChoices.map((t, i) => ({ t, correct: i === 0 })).sort(() => Math.random() - 0.5);
                 this.correctIndex = mapped.findIndex(m => m.correct);
+                this.currentChoices = mapped.map(item => item.t);
                 btns.forEach((b, i) => {
                     b.innerText = mapped[i].t;
                     b.disabled = false;
@@ -1107,6 +1267,15 @@ loc,q,ans,memo,dist1,dist2,dist3
                 else { btns[idx].style.backgroundColor = "#ffcdd2"; btns[this.correctIndex].style.backgroundColor = "#c8e6c9"; }
                 
                 const data = this.quizData[this.currentIndex];
+                this.sessionResults[this.currentIndex] = {
+                    question: data.q,
+                    location: data.loc || "",
+                    correct: win,
+                    score: win ? 1 : 0,
+                    selectedAnswer: this.currentChoices[idx] || "",
+                    modelAnswer: data.ans,
+                    comment: data.memo || ""
+                };
                 const memoText = data.memo ? `\n\n【解説】\n${data.memo}` : "";
                 this.showFeedback(win, `【元の解答例】\n${data.ans}${memoText}`);
             },
@@ -1121,6 +1290,9 @@ loc,q,ans,memo,dist1,dist2,dist3
 
                 document.getElementById('submit-desc-btn').disabled = true;
                 document.getElementById('result-label').innerText = "採点中...";
+                document.getElementById('result-label').classList.add('grading-wait');
+                document.getElementById('explanation').innerText = "";
+                document.getElementById('next-btn').classList.add('hidden');
                 document.getElementById('feedback').classList.remove('hidden');
 
                 try {
@@ -1164,30 +1336,114 @@ loc,q,ans,memo,dist1,dist2,dist3
                     res.comment = res.comment.slice(0, 1000);
 
                     if(res.score >= 80) this.score++;
-                    this.showFeedback(`${res.judgment} (${res.score}点)`, `${res.comment}\n\n【模範解答】\n${data.ans}`);
+                    this.sessionResults[this.currentIndex] = {
+                        question: data.q,
+                        location: data.loc || "",
+                        score: res.score,
+                        judgment: res.judgment,
+                        comment: res.comment,
+                        userAnswer: userAns,
+                        modelAnswer: data.ans
+                    };
+                    this.showFeedback(`${res.judgment} ${res.score}点`, `${res.comment}\n\n【模範解答】\n${data.ans}`);
                 } catch(e) {
-                    this.showFeedback("エラー", "採点に失敗しました。");
+                    console.error("採点エラー:", e);
+                    this.showFeedback("エラー", "採点に失敗しました。接続を確認して、もう一度採点してください。", false);
                     document.getElementById('submit-desc-btn').disabled = false;
                 }
             },
 
-            showFeedback(title, detail) {
+            showFeedback(title, detail, showNext = true) {
                 document.getElementById('feedback').classList.remove('hidden');
-                document.getElementById('result-label').innerText = title === true ? "⭕ 正解" : (title === false ? "❌ 不正解" : title);
+                const label = document.getElementById('result-label');
+                label.classList.remove('grading-wait');
+                label.innerText = title === true ? "⭕ 正解" : (title === false ? "❌ 不正解" : title);
                 document.getElementById('explanation').innerText = detail;
+                document.getElementById('next-btn').classList.toggle('hidden', !showNext);
             },
 
             nextQuestion() {
                 this.currentIndex++;
                 if(this.currentIndex < this.quizData.length) this.loadQuestion();
-                else {
-                    this.showScreen('result-screen');
-                    document.getElementById('final-score').innerText = `${this.quizData.length}問中 ${this.score}問 正解`;
+                else this.finishSession();
+            },
+
+            getOverallComment(average) {
+                if (average >= 90) return "要点と論理関係を非常によく捉えています。この精度を保ちながら、表現をさらに簡潔に整えていきましょう。";
+                if (average >= 75) return "重要な内容はおおむね理解できています。部分点だった問題の不足語句や因果関係を見直すと、さらに安定します。";
+                if (average >= 50) return "基本的な方向性は捉えられています。模範解答と自分の回答を比べ、抜けていた要素を整理しましょう。";
+                return "授業メモと模範解答を確認し、誰が・なぜ・どのように、という関係を短くまとめ直してから再挑戦しましょう。";
+            },
+
+            finishSession() {
+                const completedAt = new Date().toISOString();
+                const results = this.sessionResults.filter(Boolean);
+                let totalScore;
+                let maxScore;
+                let averageScore;
+                let summary;
+
+                if (this.mode === 'desc') {
+                    totalScore = results.reduce((sum, result) => sum + Number(result.score || 0), 0);
+                    maxScore = this.quizData.length * 100;
+                    averageScore = this.quizData.length ? Math.round(totalScore / this.quizData.length) : 0;
+                    summary = this.getOverallComment(averageScore);
+                } else {
+                    totalScore = results.filter(result => result.correct).length;
+                    maxScore = this.quizData.length;
+                    averageScore = maxScore ? Math.round((totalScore / maxScore) * 100) : 0;
+                    summary = averageScore >= 80
+                        ? "よく理解できています。間違えた問題だけを復習すると効率的です。"
+                        : "解説と元の解答例を見直して、もう一度挑戦しましょう。";
+                }
+
+                const entry = {
+                    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                    startedAt: this.sessionStartedAt,
+                    completedAt,
+                    mode: this.mode,
+                    subject: this.getSubjectName(),
+                    dataLabel: this.dataLabel,
+                    choiceModel: this.choiceModel,
+                    gradingModel: this.gradingModel,
+                    totalScore,
+                    maxScore,
+                    averageScore,
+                    summary,
+                    results
+                };
+                this.saveLearningHistory(entry);
+                this.renderFinalResult(entry);
+                this.showScreen('result-screen');
+            },
+
+            renderFinalResult(entry) {
+                const finalScore = document.getElementById('final-score');
+                const finalSummary = document.getElementById('final-summary');
+                const finalDetails = document.getElementById('final-details');
+
+                if (entry.mode === 'desc') {
+                    finalScore.innerText = `${entry.totalScore} / ${entry.maxScore}点　平均 ${entry.averageScore}点`;
+                    finalSummary.innerHTML = `<div class="result-entry"><p class="result-total">総評</p><p>${this.escapeHTML(entry.summary)}</p></div>`;
+                    finalDetails.innerHTML = entry.results.map((result, index) => `
+                        <div class="result-entry">
+                            <p><strong>${index + 1}. ${this.escapeHTML(result.question)}</strong></p>
+                            <p class="result-total">${result.score}点　${this.escapeHTML(result.judgment)}</p>
+                            <p><strong>講評:</strong> ${this.escapeHTML(result.comment)}</p>
+                            <p><strong>自分の回答:</strong> ${this.escapeHTML(result.userAnswer)}</p>
+                            <p><strong>模範解答:</strong> ${this.escapeHTML(result.modelAnswer)}</p>
+                        </div>`).join("");
+                } else {
+                    finalScore.innerText = `${entry.maxScore}問中 ${entry.totalScore}問 正解`;
+                    finalSummary.innerHTML = `<p>${this.escapeHTML(entry.summary)}</p>`;
+                    finalDetails.innerHTML = "";
                 }
             },
 
             returnToMenu() {
                 this.updateMenuStatus();
+                document.getElementById('settings-panel').classList.add('hidden');
+                document.getElementById('history-panel').classList.add('hidden');
                 this.showScreen('menu-screen');
             }
         };
