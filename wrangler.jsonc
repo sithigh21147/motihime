@@ -5,6 +5,6 @@
   "compatibility_date": "2026-09-30",
   "vars": {
     "ALLOWED_ORIGINS": "https://sithigh21147.github.io",
-    "ALLOWED_MODELS": "gemini-3.5-flash-lite,gemini-3.5-flash"
+    "ALLOWED_MODELS": "gemini-3.8-flash,gemini-3.7-flash,gemini-3.6-flash,gemini-3.5-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite"
   }
 }

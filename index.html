@@ -274,7 +274,7 @@
             apiKey: "",
             baseUrl: sharedGeminiProxyUrl,
             choiceModel: "gemini-3.5-flash-lite",
-            gradingModel: "gemini-3.5-flash"
+            gradingModel: "gemini-3.8-flash"
         });
 
         const providerPresets = {
@@ -282,13 +282,13 @@
                 apiKey: "",
                 baseUrl: "",
                 choiceModel: "gemini-3.5-flash-lite",
-                gradingModel: "gemini-3.5-flash"
+                gradingModel: "gemini-3.8-flash"
             },
             "gemini-proxy": {
                 apiKey: "",
                 baseUrl: sharedGeminiProxyUrl,
                 choiceModel: "gemini-3.5-flash-lite",
-                gradingModel: "gemini-3.5-flash"
+                gradingModel: "gemini-3.8-flash"
             },
             ollama: {
                 apiKey: "",
@@ -631,7 +631,7 @@ loc,q,ans,memo,dist1,dist2,dist3
             getProviderNote(provider) {
                 const notes = {
                     gemini: "利用者が自分のGemini APIキーを入力する方式です。キーはブラウザ内に保存しません。",
-                    "gemini-proxy": "所有者が用意した中継先を使います。利用者によるAPIキー入力は不要です。",
+                    "gemini-proxy": "所有者が用意した中継先を使います。利用者によるAPIキー入力は不要です。用途ごとにモデルを候補一覧から選べます。",
                     ollama: "Ollamaを起動し、使用するモデルを事前に取得してください。通常のURLは http://localhost:11434 です。接続できない場合はOllama側でこのページのオリジンを許可してください。",
                     lmstudio: "LM StudioのDeveloper画面でローカルサーバーを起動し、モデルをロードしてください。通常のURLは http://localhost:1234/v1 です。接続できない場合はLM Studio側のCORS設定を確認してください。",
                     "openai-compatible": "OpenAI、OpenRouter、Groqなど、/v1/chat/completions互換のサービスに接続できます。静的HTMLでは入力したキーを完全に隠せないため、個人用キーまたは専用プロキシを使用してください。",
@@ -643,8 +643,8 @@ loc,q,ans,memo,dist1,dist2,dist3
             getPresetModels(provider) {
                 const preset = providerPresets[provider] || {};
                 const models = [preset.choiceModel, preset.gradingModel].filter(Boolean);
-                if (provider === "gemini") {
-                    models.push("gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.6-flash", "gemini-3.7-flash");
+                if (["gemini", "gemini-proxy"].includes(provider)) {
+                    models.push("gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite");
                 }
                 if (provider === "openai-compatible") {
                     models.push("gpt-5-nano", "gpt-5-mini");
@@ -667,7 +667,15 @@ loc,q,ans,memo,dist1,dist2,dist3
                 uniqueModels.forEach(model => {
                     const option = document.createElement('option');
                     option.value = model;
-                    option.innerText = model;
+                    const labels = {
+                        "gemini-3.8-flash": "Gemini 3.8 Flash（最新・高精度）",
+                        "gemini-3.7-flash": "Gemini 3.7 Flash（高精度）",
+                        "gemini-3.6-flash": "Gemini 3.6 Flash（バランス）",
+                        "gemini-3.5-flash": "Gemini 3.5 Flash（旧世代）",
+                        "gemini-3.5-flash-lite": "Gemini 3.5 Flash-Lite（速度優先）",
+                        "gemini-3.1-flash-lite": "Gemini 3.1 Flash-Lite（軽量）"
+                    };
+                    option.innerText = labels[model] || model;
                     select.appendChild(option);
                 });
                 select.value = selectedValue && uniqueModels.includes(selectedValue) ? selectedValue : uniqueModels[0];
