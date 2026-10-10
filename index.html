@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>もちひめ - 汎用テスト対策アプリ</title>
+    <title>もちひめ - 国語の考査対策</title>
     <style>
         :root {
             --primary-color: #5d4037;
@@ -30,6 +30,26 @@
         }
         .screen { text-align: center; }
         .hidden { display: none !important; }
+        #flash-ratings { display:flex; gap:8px; }
+        #flash-ratings button { flex:1; min-width:0; }
+        .rating-badge { display:inline-block; padding:4px 8px; border-radius:8px; font-weight:700; white-space:nowrap; font-size:.9rem; }
+        .rating-ng { background:#ffe7e9; color:#9e2034; }
+        .rating-unsure { background:#fff3ca; color:#795900; }
+        .rating-ok { background:#def5e7; color:#176639; }
+        #flash-ratings .rating-ng { background:#ffe7e9; color:#9e2034; }
+        #flash-ratings .rating-unsure { background:#fff3ca; color:#795900; }
+        #flash-ratings .rating-ok { background:#def5e7; color:#176639; }
+        .review-table { width:100%; border-collapse:collapse; margin:16px 0; text-align:left; font-size:.95rem; }
+        .review-table caption { text-align:left; font-weight:700; padding:8px 0; }
+        .review-table th,.review-table td { padding:10px 5px; border-bottom:1px solid #8884; vertical-align:top; overflow-wrap:anywhere; }
+        .review-table th { font-weight:600; }
+        .review-counts { table-layout:fixed; text-align:center; }
+        .review-counts td { font-size:1.25rem; font-weight:700; }
+        .review-questions td:first-child { width:1.5em; color:#888; }
+        .review-questions td:nth-child(2) { width:5.5em; }
+        .dopamine-theme .rating-ng { background:#42232e; color:#ffb8c4; }
+        .dopamine-theme .rating-unsure { background:#3c331c; color:#ffe292; }
+        .dopamine-theme .rating-ok { background:#173b30; color:#9bffd1; }
         h1 {
             color: var(--primary-color);
             border-bottom: 2px solid var(--primary-color);
@@ -113,6 +133,13 @@
         .result-total { font-size: 1.25rem; font-weight: bold; color: var(--primary-color); }
         .grading-wait { color: #b42318; }
         .grading-row { margin: 8px 0; border: 1px solid #ddd; border-radius: 14px; overflow: hidden; }
+        .grading-archive { margin:12px 0; padding:10px; border:1px solid #8885; border-radius:14px; }
+        .grading-archive > summary { cursor:pointer; font-weight:600; padding:4px; }
+        .grading-arriving { animation:grading-arrive .45s ease-out; }
+        .grading-grouping { animation:grading-group .5s ease-out; }
+        @keyframes grading-arrive { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes grading-group { from { opacity:.4; transform:translateY(-10px) scale(.97); } to { opacity:1; transform:translateY(0) scale(1); } }
+        @media (prefers-reduced-motion:reduce) { .grading-arriving,.grading-grouping { animation:none; } }
         .grading-heading { display:flex; align-items:center; gap:8px; padding:8px 12px; }
         .grading-heading button { width:auto; margin:0; padding:7px 12px; font-size:14px; }
         .grading-heading .grading-toggle { flex:1; display:flex; justify-content:space-between; background:transparent; color:inherit; text-align:left; }
@@ -139,11 +166,14 @@
         #progress-fill { height: 100%; width: 0; background: #2e7d32; transition: width .3s ease; }
         #dopamine-status { font-weight: bold; color: #b05a00; min-height: 2em; }
         .dopamine-hit { animation: celebrate .5s ease; }
-        @keyframes celebrate { 50% { transform:scale(1.012); box-shadow:0 0 0 2px var(--celebration-color,#f4bd50),0 0 42px var(--celebration-color,#f4bd50); } }
+        @keyframes celebrate { 25% { transform:translateY(-5px) scale(1.035); box-shadow:0 0 0 5px var(--celebration-color,#f4bd50),0 0 85px var(--celebration-color,#f4bd50),0 0 150px #9e49ff88; } 65% { transform:scale(.992); } }
         #celebration { position: fixed; inset: 0; pointer-events: none; z-index: 10; overflow: hidden; }
-        .confetti { position:absolute; font-size:28px; will-change:transform,opacity; }
+        .confetti { position:absolute; font-size:clamp(30px,4vw,48px); filter:drop-shadow(0 0 9px #eaffff); will-change:transform,opacity; }
         .reward-rays { position:absolute; inset:-45%; background:repeating-conic-gradient(from 0deg,transparent 0deg 7deg,var(--reward-color,#66f5d0) 7.4deg 8deg,transparent 8.5deg 15deg); mask-image:radial-gradient(circle,transparent 0 12%,#000 35%); animation:reward-rays .85s ease-out forwards; }
-        @keyframes reward-rays { 0% { transform:scale(.8); opacity:0; } 20% { opacity:.35; } 100% { transform:scale(1.12); opacity:0; } }
+        @keyframes reward-rays { 0% { transform:scale(.65) rotate(-8deg); opacity:0; } 20% { opacity:.65; } 100% { transform:scale(1.35) rotate(12deg); opacity:0; } }
+        .reward-shockwave { position:absolute; left:50%; top:42%; width:140px; height:140px; border:12px double var(--reward-color); border-radius:50%; box-shadow:0 0 60px var(--reward-color),inset 0 0 35px var(--reward-color); animation:reward-shockwave 1.2s cubic-bezier(.1,.7,.2,1) forwards; }
+        @keyframes reward-shockwave { from { transform:translate(-50%,-50%) scale(.2); opacity:.9; } to { transform:translate(-50%,-50%) scale(12); opacity:0; } }
+        .reward-burst strong { -webkit-text-stroke:1px #fff8; }
         .reward-burst { position:absolute; top:30%; left:50%; transform:translateX(-50%); width:min(85vw,600px); text-align:center; color:var(--reward-color,#66f5d0); font-family:system-ui,"Meiryo",sans-serif; font-weight:900; text-shadow:0 0 30px var(--reward-color,#66f5d0),0 4px 12px #000; animation:reward-burst 1.35s ease-out forwards; }
         .reward-burst strong { display:block; font-size:clamp(52px,12vw,108px); line-height:1; letter-spacing:-.04em; }
         .reward-burst span { display:block; font-size:clamp(24px,6vw,46px); margin-top:12px; }
@@ -206,26 +236,38 @@
             <div class="menu-toolbar">
                 <button onclick="app.openHelp()" class="help-btn">？ Help</button>
             </div>
-            <h1>メニュー</h1>
+            <h1>もちひめ</h1>
             <div id="resume-panel" class="settings-card hidden">
                 <p id="resume-description"></p>
                 <button onclick="app.restoreLearning()">続きから再開</button>
                 <p class="hint-text">採点待ちの回答は再開時に再送信します。問題は中断時のデータを使用します。</p>
             </div>
-            <button onclick="app.startMode('choice')">3択クイズモード</button>
+            <button onclick="app.startMode('choice')">3択クイズ</button>
             <div class="mode-button-wrap" onmouseenter="app.showOfflineNotice()" onmouseleave="app.hideOfflineNotice()">
-                <button id="desc-btn" onclick="app.requestDescMode()">記述演習モード</button>
+                <button id="desc-btn" onclick="app.requestDescMode()">記述演習</button>
             </div>
             <p id="offline-message" class="offline-message" aria-live="polite"></p>
+            <button onclick="app.startMode('flash')">フラッシュカード</button>
             <button onclick="app.openSettings()" class="secondary-btn">設定</button>
             <button onclick="app.toggleHistory()" class="muted-btn">学習履歴を見る</button>
 
         <section id="settings-panel" class="settings-panel hidden">
             <h2>設定</h2>
+            <div class="settings-card">
+                <h2>復習・再出題</h2>
+                <label><input id="anki-enabled" type="checkbox" onchange="app.saveReviewSettings()"> Anki風の再出題を有効にする</label>
+                <p class="hint-text">OKは終了。NG・迷ったは指定した問数の後に再出題します。残り問題が少ない場合は前倒しします。3択の不正解はNGとして扱います。</p>
+                <label for="ng-gap">NGを何問後に再出題するか</label><input id="ng-gap" type="number" min="0" max="100" value="2" onchange="app.saveReviewSettings()">
+                <label for="unsure-gap">迷ったを何問後に再出題するか</label><input id="unsure-gap" type="number" min="0" max="100" value="5" onchange="app.saveReviewSettings()">
+                <label for="desc-ng">記述：この点数未満はNG</label><input id="desc-ng" type="number" min="0" max="99" value="60" onchange="app.saveReviewSettings()">
+                <label for="desc-ok">記述：この点数以上はOK</label><input id="desc-ok" type="number" min="1" max="100" value="80" onchange="app.saveReviewSettings()">
+                <p class="hint-text">NG以上・OK未満は「迷った」。通常の再挑戦ではOK未満の問題が対象です。</p>
+                <button class="muted-btn" onclick="app.resetReviewSettings()">復習設定をデフォルトに戻す</button>
+            </div>
             <div class="settings-card" id="dopamine-settings">
                 <h2>ドパガキモード</h2>
                 <label><input type="checkbox" id="dopamine-enabled" onchange="app.saveDopaminePreferences()"> ドパガキモードを有効にする</label>
-                <p class="hint-text">黒系デザインと得点演出を、3択・記述の両方に適用します。</p>
+                <p class="hint-text">黒系デザインと得点演出を、3択・記述・フラッシュカードに適用します。</p>
                 <label><input type="checkbox" id="sound-enabled" onchange="app.saveDopaminePreferences()"> 効果音を鳴らす</label>
                 <label><input type="checkbox" id="auto-reveal-enabled" checked onchange="app.saveDopaminePreferences()"> 記述の採点結果を自動表示する</label>
                 <label for="reveal-delay">採点結果を自動表示するまでの秒数</label>
@@ -300,9 +342,10 @@
             <div class="settings-card">
                 <h2>問題データ作成支援</h2>
                 <button onclick="app.downloadTemplate()" class="secondary-btn">問題データひな形 (CSV) をダウンロード</button>
-                <button onclick="app.copyGenerationPrompt()" class="secondary-btn">授業の録音・ノートから問題データを作るプロンプトをコピー</button>
+                <button onclick="app.copyGenerationPrompt('literary')" class="secondary-btn">文学国語の問題データ生成プロンプトをコピー</button>
+                <button onclick="app.copyGenerationPrompt('logical')" class="secondary-btn">論理国語の問題データ生成プロンプトをコピー</button>
                 <p id="copy-status" class="status-message"></p>
-                <span class="hint-text">コピーされるプロンプトは、上で選択した科目に合わせて内容が変わります。</span>
+                <span class="hint-text">授業の録音・ノートと一緒に使います。科目プロファイルの設定とは独立しています。</span>
             </div>
 
             <div class="settings-card">
@@ -325,7 +368,9 @@
             <h1>使い方</h1>
             <div class="help-content">
                 <h2>問題を解く</h2>
-                <p>メニューから3択または記述演習を選びます。配布されたデフォルト問題は起動時に自動で読み込まれます。</p>
+                <p>3択クイズ・記述演習・フラッシュカードを選びます。配布されたデフォルト問題は起動時に自動で読み込まれます。</p>
+                <p>フラッシュカードは答えを見る前に自分で考え、NG・迷った・OKで評価します。結果画面から不正解やOK未満の問題だけをもう一回取り組めます。</p>
+                <p>設定でAnki風の再出題をオンにすると、OKまで繰り返します。初期設定はオフ。オンの場合はNGが2問後、迷ったが5問後で、残り問題が少なければ前倒しします。記述の初期基準は60点未満がNG、60～79点が迷った、80点以上がOKです。再回答後の集計は同じ問題の最新結果を使います。</p>
 
                 <h2>自分の問題データを使う</h2>
                 <p>「設定」からCSVを選んで適用すると、この端末ではその問題が優先されます。「配布されたデフォルト問題に戻す」で元に戻せます。</p>
@@ -366,6 +411,15 @@
                 <textarea id="user-answer" placeholder="ここに解答を入力してください..." rows="4" oninput="app.saveLearningSession()"></textarea>
                 <button id="submit-desc-btn" onclick="app.submitDesc()">回答を送信して次へ</button>
             </div>
+            <div id="flash-container" class="hidden">
+                <button id="flash-reveal" onclick="app.revealFlash()">答えを見る</button>
+                <div id="flash-answer" class="result-entry hidden" style="white-space:pre-wrap"></div>
+                <div id="flash-ratings" class="hidden">
+                    <button class="rating-ng" onclick="app.rateFlash('ng')">🔴 NG</button>
+                    <button class="rating-unsure" onclick="app.rateFlash('unsure')">🟡 迷った</button>
+                    <button class="rating-ok" onclick="app.rateFlash('ok')">🟢 OK</button>
+                </div>
+            </div>
 
             <div id="feedback" class="hidden">
                 <div id="result-label"></div>
@@ -388,7 +442,7 @@
 
         <div id="preparation-screen" class="screen hidden">
             <h1>選択肢を準備中</h1>
-            <p>全問を先に生成します。開始後は選択肢の生成を待たずに進めます。</p>
+            <p>この問題の選択肢を準備しています。次の問題は、解いている間に先読みして生成します。</p>
             <p id="preparation-status" aria-live="polite"></p>
             <button onclick="app.returnToMenu()" class="muted-btn">キャンセル</button>
         </div>
@@ -400,6 +454,7 @@
             <div id="final-summary"></div>
             <div id="final-details"></div>
             <div id="final-grading-statuses" aria-label="提出した回答の採点状況"></div>
+            <button id="review-btn" class="hidden" onclick="app.retryMissed()">間違った問題だけもう一回</button>
             <button onclick="app.returnToMenu()">メニューに戻る</button>
         </div>
     </div>
@@ -529,8 +584,11 @@
             rewardTimer: null,
             sessionActive: false,
             finalEntry: null,
+            reviewSettings: { anki:false, ngGap:2, unsureGap:5, ngThreshold:60, okThreshold:80 },
 
             async initialize() {
+                try { this.reviewSettings = this.normalizeReviewSettings(JSON.parse(localStorage.getItem('motihime-review-settings') || '{}')); } catch (_) {}
+                this.renderReviewSettings();
                 window.addEventListener('pagehide', () => this.saveLearningSession());
                 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') this.saveLearningSession(); });
                 try { const delay = Number(localStorage.getItem('motihime-reveal-delay') ?? 3); this.revealDelay = Number.isFinite(delay) ? Math.max(0, Math.min(60, Math.round(delay))) : 3; } catch (_) {}
@@ -822,8 +880,7 @@ loc,q,ans,memo,dist1,dist2,dist3
 `;
             },
 
-            async copyGenerationPrompt() {
-                const selectedProfile = document.getElementById('subject-profile').value;
+            async copyGenerationPrompt(selectedProfile) {
                 const prompt = this.buildGenerationPrompt(selectedProfile);
                 const status = document.getElementById('copy-status');
                 try {
@@ -1257,14 +1314,14 @@ loc,q,ans,memo,dist1,dist2,dist3
                 }
                 list.innerHTML = history.map(entry => {
                     const date = new Date(entry.completedAt).toLocaleString("ja-JP");
-                    const modeName = entry.mode === "desc" ? "記述演習" : "3択クイズ";
+                    const modeName = entry.mode === "desc" ? "記述演習" : entry.mode === 'flash' ? 'フラッシュカード' : "3択クイズ";
                     const resultText = entry.mode === "desc"
                         ? `${this.escapeHTML(entry.totalScore)} / ${this.escapeHTML(entry.maxScore)}点　平均 ${this.escapeHTML(entry.averageScore)}点`
-                        : `${this.escapeHTML(entry.totalScore)} / ${this.escapeHTML(entry.maxScore)}問正解`;
+                        : entry.mode === 'flash' ? this.escapeHTML(entry.summary) : `${this.escapeHTML(entry.totalScore)} / ${this.escapeHTML(entry.maxScore)}問正解`;
                     const details = (entry.results || []).map((result, index) => {
                         const outcome = entry.mode === "desc"
                             ? (result.score == null ? '未採点' : `${this.escapeHTML(result.score)}点 ${this.escapeHTML(result.judgment)}`)
-                            : (result.correct ? "正解" : "不正解");
+                            : entry.mode === 'flash' ? ({ng:'NG',unsure:'迷った',ok:'OK'}[result.rating] || '') : (result.correct ? "正解" : "不正解");
                         const answer = entry.mode === "desc" && result.userAnswer
                             ? `<p><strong>自分の回答:</strong> ${this.escapeHTML(result.userAnswer)}</p>`
                             : "";
@@ -1273,7 +1330,7 @@ loc,q,ans,memo,dist1,dist2,dist3
                             : "";
                         return `<div class="result-entry"><p><strong>${index + 1}. ${this.escapeHTML(result.question)}</strong></p><p>${outcome}</p>${answer}${comment}</div>`;
                     }).join("");
-                    return `<details class="history-entry"><summary>${date}　${modeName}　${resultText}</summary><p>${this.escapeHTML(entry.subject)} / ${this.escapeHTML(entry.dataLabel)}</p><p>${this.escapeHTML(entry.summary || "")}</p>${details}</details>`;
+                    return `<details class="history-entry"><summary>${date}　${modeName}　${resultText}</summary><p>${this.escapeHTML(entry.subject)} / ${this.escapeHTML(entry.dataLabel)}</p>${entry.mode === 'flash' ? this.renderRatingCounts(entry.counts || Object.fromEntries(['ng','unsure','ok'].map(r=>[r,entry.results.filter(item=>item.rating===r).length]))) + this.renderFlashTable(entry.results) : `<p>${this.escapeHTML(entry.summary || "")}</p>${details}`}</details>`;
                 }).join("");
             },
 
@@ -1345,12 +1402,103 @@ loc,q,ans,memo,dist1,dist2,dist3
             },
 
             showScreen(id) {
+                const changed = this.activeScreen !== id;
                 this.activeScreen = id;
                 document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
                 document.getElementById(id).classList.remove('hidden');
+                if (changed && window.scrollTo) window.scrollTo({top:0,behavior:'instant'});
             },
 
-            async startMode(m) {
+            normalizeReviewSettings(value = {}) {
+                const number = (v, fallback, min, max) => Number.isFinite(Number(v)) ? Math.max(min,Math.min(max,Math.round(Number(v)))) : fallback;
+                const ngThreshold = number(value.ngThreshold,60,0,99);
+                return { anki:value.anki === true, ngGap:number(value.ngGap,2,0,100), unsureGap:number(value.unsureGap,5,0,100), ngThreshold, okThreshold:number(value.okThreshold,80,ngThreshold+1,100) };
+            },
+            renderReviewSettings() {
+                const prefs = this.reviewSettings;
+                document.getElementById('anki-enabled').checked = prefs.anki;
+                for (const [id,key] of [['ng-gap','ngGap'],['unsure-gap','unsureGap'],['desc-ng','ngThreshold'],['desc-ok','okThreshold']]) document.getElementById(id).value = prefs[key];
+            },
+            saveReviewSettings() {
+                this.reviewSettings = this.normalizeReviewSettings({anki:document.getElementById('anki-enabled').checked, ngGap:document.getElementById('ng-gap').value, unsureGap:document.getElementById('unsure-gap').value, ngThreshold:document.getElementById('desc-ng').value, okThreshold:document.getElementById('desc-ok').value});
+                this.renderReviewSettings();
+                try { localStorage.setItem('motihime-review-settings',JSON.stringify(this.reviewSettings)); } catch (_) {}
+            },
+            resetReviewSettings() {
+                this.reviewSettings = this.normalizeReviewSettings(); this.renderReviewSettings(); this.saveReviewSettings();
+            },
+            reviewRating(score) {
+                const prefs = this.sessionReview || this.reviewSettings;
+                return score < prefs.ngThreshold ? 'ng' : score < prefs.okThreshold ? 'unsure' : 'ok';
+            },
+            ratingLabel(rating) {
+                return {ng:'🔴 NG',unsure:'🟡 迷った',ok:'🟢 OK'}[rating] || '未評価';
+            },
+            ratingBadge(rating) {
+                const key = ['ng','unsure','ok'].includes(rating) ? rating : 'unknown';
+                return `<span class="rating-badge rating-${key}">${this.ratingLabel(key)}</span>`;
+            },
+            renderRatingCounts(counts) {
+                return `<table class="review-table review-counts"><caption>評価の集計</caption><thead><tr>${['ng','unsure','ok'].map(r=>`<th scope="col">${this.ratingBadge(r)}</th>`).join('')}</tr></thead><tbody><tr>${['ng','unsure','ok'].map(r=>`<td>${this.escapeHTML(counts[r] ?? 0)}問</td>`).join('')}</tr></tbody></table>`;
+            },
+            renderFlashTable(results) {
+                return `<table class="review-table review-questions"><caption>カードごとの結果</caption><thead><tr><th scope="col">#</th><th scope="col">評価</th><th scope="col">問題</th></tr></thead><tbody>${results.map((result,i)=>`<tr><td>${i+1}</td><td>${this.ratingBadge(result.rating)}</td><td>${this.escapeHTML(result.question)}</td></tr>`).join('')}</tbody></table>`;
+            },
+            scheduleReview(index, rating) {
+                if (!this.sessionReview?.anki || rating === 'ok') return;
+                const data = this.quizData[index];
+                const gap = rating === 'ng' ? this.sessionReview.ngGap : this.sessionReview.unsureGap;
+                // Do not replace a question already displayed or submitted while grading is in flight.
+                const protectedEnd = this.currentIndex < this.quizData.length ? this.currentIndex + 1 : this.currentIndex;
+                const position = Math.min(this.quizData.length,Math.max(protectedEnd,index+1+gap));
+                this.quizData.splice(position,0,{...data});
+                this.preparedChoices.splice(position,0,this.preparedChoices[index] || null);
+                this.sessionResults.splice(position,0,null);
+                if (this.mode !== 'desc' && this.mode !== 'flash') this.choiceTasks.splice(position,0,this.choiceTasks[index]);
+            },
+            latestResults() {
+                const latest = new Map();
+                this.quizData.forEach((data,i) => {
+                    const result = this.sessionResults[i] || (this.gradingJobs[i]?.status === 'error' ? {question:data.q,modelAnswer:data.ans,userAnswer:this.gradingJobs[i].userAns,score:null,judgment:'未採点',comment:'採点エラー'} : null);
+                    if (result) latest.set(data.cardId ?? i,{...result, questionData:{...data}});
+                });
+                return [...latest.values()];
+            },
+            updateReviewButton() {
+                const pending = this.mode === 'desc' && this.gradingJobs.some(job => job.status === 'pending');
+                const missed = this.latestResults().filter(result => this.mode === 'desc' ? result.score == null || result.score < this.reviewSettings.okThreshold : this.mode === 'flash' ? result.rating !== 'ok' : !result.correct);
+                const button = document.getElementById('review-btn');
+                button.classList.toggle('hidden', pending || !missed.length);
+                button.innerText = `もう一回取り組む ${missed.length}問`;
+                this.missedQuestions = missed.map(result => result.questionData);
+            },
+            async retryMissed() {
+                this.updateReviewButton();
+                if (!this.missedQuestions.length || (this.mode === 'desc' && this.gradingJobs.some(job => job.status === 'pending'))) return;
+                const mode = this.mode;
+                const questions = this.missedQuestions;
+                this.clearLearningSession();
+                await this.startMode(mode,questions);
+            },
+            revealFlash() {
+                if (this.paused) return;
+                document.getElementById('flash-answer').classList.remove('hidden');
+                document.getElementById('flash-ratings').classList.remove('hidden');
+                document.getElementById('flash-reveal').classList.add('hidden');
+                this.flashRevealed = true; this.saveLearningSession();
+            },
+            rateFlash(rating) {
+                if (this.paused || !this.flashRevealed || !['ng','unsure','ok'].includes(rating) || this.sessionResults[this.currentIndex]) return;
+                const data = this.quizData[this.currentIndex];
+                this.sessionResults[this.currentIndex] = {question:data.q,modelAnswer:data.ans,rating,correct:rating==='ok'};
+                this.scheduleReview(this.currentIndex,rating);
+                this.combo = rating === 'ok' ? this.combo + 1 : 0;
+                this.bestCombo = Math.max(this.bestCombo,this.combo);
+                this.nextQuestion();
+                if (this.dopamineEnabled) { this.playSound(rating==='ok'); if (rating==='ok') this.celebrate(100); }
+            },
+
+            async startMode(m, subset = null) {
                 this.dopamineEnabled = this.dopaminePreference || m === 'dopamine' || m === 'dopamine-desc';
                 if (m === 'dopamine-desc') m = 'desc';
                 if (m === 'choice' && this.dopamineEnabled) m = 'dopamine';
@@ -1361,6 +1509,9 @@ loc,q,ans,memo,dist1,dist2,dist3
                 document.body.classList.toggle('dopamine-theme', this.dopamineEnabled);
                 if (this.readLearningSession() && !window.confirm('保存中の学習があります。新しく始めると中断データは置き換わります。始めますか？')) { document.body.classList.toggle('dopamine-theme',this.dopaminePreference); return; }
                 this.clearLearningSession();
+                if (!subset) this.menuQuizData = this.quizData.map(q=>({...q}));
+                this.quizData = (subset || this.quizData).map((q,i)=>({...q,cardId:q.cardId ?? `card-${i}`}));
+                this.sessionReview = {...this.reviewSettings};
                 this.clearRewardEffects();
                 this.finalEntry = null;
                 this.mode = m;
@@ -1383,34 +1534,46 @@ loc,q,ans,memo,dist1,dist2,dist3
                 clearInterval(this.nextCountdownTimer);
                 this.combo = 0;
                 this.bestCombo = 0;
-                this.preparedChoices = [];
+                this.preparedChoices = Array(this.quizData.length).fill(null);
                 document.getElementById('settings-panel').classList.add('hidden');
                 document.getElementById('history-panel').classList.add('hidden');
                 document.getElementById('dopamine-controls').classList.toggle('hidden', !this.dopamineEnabled);
+                document.getElementById('review-btn').classList.add('hidden');
                 if (m === 'choice' || m === 'dopamine') {
-                    this.showScreen('preparation-screen');
-                    let completed = 0;
-                    let cursor = 0;
-                    document.getElementById('preparation-status').innerText = `0 / ${this.quizData.length}問`;
-                    const settings = { ...this.getCurrentAISettings() };
-                    const subject = this.subjectProfile;
-                    const worker = async () => {
-                        while (cursor < this.quizData.length && this.runId === runId) {
-                            const index = cursor++;
-                            const choices = await this.generateChoices(this.quizData[index], settings, subject);
-                            if (this.runId !== runId) return;
-                            this.preparedChoices[index] = choices;
-                            completed++;
-                            document.getElementById('preparation-status').innerText = `${completed} / ${this.quizData.length}問`;
-                        }
-                    };
-                    await Promise.all([worker(), worker()]);
-                    if (this.runId !== runId) return;
+                    this.startChoicePrefetch(runId);
                 }
-                this.showScreen('quiz-screen');
                 await this.loadQuestion();
+                if (this.runId !== runId) return;
                 this.sessionActive = true;
                 this.saveLearningSession();
+            },
+
+            startChoicePrefetch(runId) {
+                const settings = { ...this.getCurrentAISettings() };
+                const subject = this.subjectProfile;
+                const data = this.quizData.slice();
+                const cache = this.preparedChoices;
+                const ready = cache.slice();
+                const tasks = Array(data.length);
+                const resolvers = Array(data.length);
+                for (let i = 0; i < data.length; i++) {
+                    tasks[i] = cache[i] ? Promise.resolve(cache[i]) : new Promise(resolve => { resolvers[i] = resolve; });
+                }
+                this.choiceTasks = tasks;
+                let cursor = this.currentIndex;
+                const worker = async () => {
+                    while (cursor < data.length && this.runId === runId) {
+                        const i = cursor++;
+                        if (ready[i]) continue;
+                        const choices = await this.generateChoices(data[i], settings, subject);
+                        // Resolve old tasks as well, so cancelled starts can finish safely.
+                        resolvers[i](choices);
+                        if (this.runId !== runId) return;
+                        this.quizData.forEach((question,index) => { if (question.cardId === data[i].cardId) cache[index] = choices; });
+                        this.saveLearningSession();
+                    }
+                };
+                void worker(); void worker();
             },
 
             updateProgress() {
@@ -1418,10 +1581,19 @@ loc,q,ans,memo,dist1,dist2,dist3
                 const percent = this.quizData.length ? Math.round(completed / this.quizData.length * 100) : 0;
                 document.getElementById('progress-fill').style.width = `${percent}%`;
                 document.getElementById('progress-bar').setAttribute('aria-valuenow', String(percent));
-                document.getElementById('dopamine-status').innerText = this.mode === 'desc' ? `採点完了 ${this.sessionResults.filter(Boolean).length}問` : `🔥 ${this.combo} COMBO　最高 ${this.bestCombo}`;
+                document.getElementById('dopamine-status').innerText = this.mode === 'desc' ? `採点完了 ${this.sessionResults.filter(Boolean).length}問` : this.mode === 'flash' ? `🔴 NG ${this.latestResults().filter(r=>r.rating==='ng').length}　🟡 迷った ${this.latestResults().filter(r=>r.rating==='unsure').length}　🟢 OK ${this.latestResults().filter(r=>r.rating==='ok').length}` : `🔥 ${this.combo} COMBO　最高 ${this.bestCombo}`;
             },
 
             async loadQuestion() {
+                const runId = this.runId;
+                const index = this.currentIndex;
+                if (this.mode !== 'desc' && this.mode !== 'flash' && !this.preparedChoices[index]) {
+                    this.showScreen('preparation-screen');
+                    document.getElementById('preparation-status').innerText = `第${index + 1}問の選択肢を生成中…`;
+                    await this.choiceTasks[index];
+                    if (this.runId !== runId || this.currentIndex !== index) return;
+                }
+                this.showScreen('quiz-screen');
                 const data = this.quizData[this.currentIndex];
                 const locText = data.loc ? ` (${data.loc})` : '';
                 document.getElementById('progress').innerText = `${this.currentIndex + 1} / ${this.quizData.length}問${locText}`;
@@ -1434,16 +1606,26 @@ loc,q,ans,memo,dist1,dist2,dist3
                 document.getElementById('next-countdown-controls').classList.add('hidden');
                 document.getElementById('user-answer').value = "";
                 document.getElementById('submit-desc-btn').disabled = false;
+                document.getElementById('flash-container').classList.toggle('hidden',this.mode !== 'flash');
                 this.updateProgress();
 
                 if (this.mode === 'choice' || this.mode === 'dopamine') {
                     document.getElementById('choice-container').classList.remove('hidden');
                     document.getElementById('desc-container').classList.add('hidden');
                     this.prepareChoices(this.preparedChoices[this.currentIndex]);
+                } else if (this.mode === 'flash') {
+                    document.getElementById('choice-container').classList.add('hidden');
+                    document.getElementById('desc-container').classList.add('hidden');
+                    document.getElementById('flash-answer').innerText = `${data.ans}${data.memo ? '\n\n'+data.memo : ''}`;
+                    document.getElementById('flash-answer').classList.add('hidden');
+                    document.getElementById('flash-ratings').classList.add('hidden');
+                    document.getElementById('flash-reveal').classList.remove('hidden');
+                    this.flashRevealed = false;
                 } else {
                     document.getElementById('choice-container').classList.add('hidden');
                     document.getElementById('desc-container').classList.remove('hidden');
                 }
+                this.saveLearningSession();
             },
 
             async generateChoices(data, settings, subject) {
@@ -1524,6 +1706,7 @@ loc,q,ans,memo,dist1,dist2,dist3
                     modelAnswer: data.ans,
                     comment: data.memo || ""
                 };
+                this.scheduleReview(this.currentIndex,win ? 'ok' : 'ng');
                 const memoText = data.memo ? `\n\n【解説】\n${data.memo}` : "";
                 this.showFeedback(win, `【元の解答例】\n${data.ans}${memoText}`);
                 if (this.mode === 'dopamine') {
@@ -1559,6 +1742,7 @@ loc,q,ans,memo,dist1,dist2,dist3
                 if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
                 const excellent = score == null || score >= 90;
                 const color = excellent ? '#ffdc73' : score >= 80 ? '#66f5d0' : score >= 60 ? '#c29aff' : '#a4c8ff';
+                card.style.setProperty('--celebration-color',color);
                 layer.style.setProperty('--reward-color',color);
                 if (score == null || score >= 80) {
                     const rays = document.createElement('div'); rays.className = 'reward-rays'; layer.appendChild(rays);
@@ -1571,7 +1755,9 @@ loc,q,ans,memo,dist1,dist2,dist3
                 burst.addEventListener('animationend',()=>burst.remove(),{once:true});
                 const halo = document.createElement('div'); halo.className = 'reward-halo'; layer.appendChild(halo);
                 halo.addEventListener('animationend',()=>halo.remove(),{once:true});
-                const count = excellent ? 40 : score >= 80 ? 28 : score >= 60 ? 14 : 6;
+                const shockwave = document.createElement('div'); shockwave.className = 'reward-shockwave'; layer.appendChild(shockwave);
+                shockwave.addEventListener('animationend',()=>shockwave.remove(),{once:true});
+                const count = excellent ? 72 + Math.min(this.combo,8) * 4 : score >= 80 ? 48 : score >= 60 ? 24 : 10;
                 for (let i = 0; i < count; i++) {
                     const particle = document.createElement('span');
                     particle.className = 'confetti';
@@ -1718,12 +1904,15 @@ loc,q,ans,memo,dist1,dist2,dist3
                         question: data.q,
                         location: data.loc || "",
                         score: res.score,
+                        rating: this.reviewRating(res.score),
                         judgment: res.judgment,
                         comment: res.comment,
                         userAnswer: userAns,
                         modelAnswer: data.ans
                     };
                     job.status = 'done';
+                    job.completedOrder = Math.max(0, ...this.gradingJobs.map(item => item.completedOrder || 0)) + 1;
+                    if (!job.reviewScheduled) { this.scheduleReview(questionIndex,this.reviewRating(res.score)); job.reviewScheduled = true; }
                     if (this.dopamineEnabled) { this.playSound(true, 'ready'); if (this.autoRevealEnabled) this.scheduleReveal(job); }
                 } catch(e) {
                     if (this.runId !== runId) return;
@@ -1819,6 +2008,10 @@ loc,q,ans,memo,dist1,dist2,dist3
                 this.cancelReveal(index);
                 job.open = automatic ? true : !job.open;
                 this.renderGradingStatuses();
+                const row = document.getElementById(`grading-row-${index}`);
+                if (job.open && row.parentElement?.classList.contains('grading-archive-items')) {
+                    row.parentElement.parentElement.open = true;
+                }
                 this.saveLearningSession();
                 if (job.open && this.dopamineEnabled) {
                     const score = this.sessionResults[index].score;
@@ -1841,6 +2034,23 @@ loc,q,ans,memo,dist1,dist2,dist3
 
             renderGradingStatuses() {
                 const container = document.getElementById(this.gradingEnded ? 'final-grading-statuses' : 'grading-statuses');
+                const done = this.gradingJobs.filter(job => job.status === 'done');
+                const latest = done.reduce((last, job) => !last || (job.completedOrder || job.index + 1) > (last.completedOrder || last.index + 1) ? job : last, null);
+                let archive = container.querySelector('.grading-archive');
+                if (!archive) {
+                    archive = document.createElement('details'); archive.className = 'grading-archive';
+                    archive.innerHTML = '<summary></summary><div class="grading-archive-items"></div>';
+                    container.appendChild(archive);
+                }
+                archive.hidden = done.length < 2;
+                const archiveCount = Math.max(0, done.length - 1);
+                const summary = archive.querySelector('summary');
+                summary.textContent = `これまでの採点結果 ${archiveCount}問 — 押して確認`;
+                if (archive.dataset.count !== String(archiveCount)) {
+                    summary.classList.remove('grading-grouping'); void summary.offsetWidth;
+                    summary.classList.add('grading-grouping'); archive.dataset.count = String(archiveCount);
+                }
+                const grouped = archive.querySelector('.grading-archive-items');
                 this.gradingJobs.forEach(job => {
                     const i = job.index;
                     let row = document.getElementById(`grading-row-${i}`);
@@ -1848,37 +2058,52 @@ loc,q,ans,memo,dist1,dist2,dist3
                         row = document.createElement('section'); row.id = `grading-row-${i}`;
                         row.innerHTML = `<div class="grading-heading"><button class="grading-toggle" onclick="app.openGradingResult(${i})" aria-controls="grading-body-${i}" aria-expanded="false"><span>第${i + 1}問</span><span class="grading-badge"></span></button><span class="grading-countdown" id="grading-countdown-${i}"></span><button class="grading-now" onclick="app.openGradingResult(${i})">今すぐ確認</button><button class="grading-cancel" onclick="app.cancelReveal(${i})" aria-label="第${i + 1}問の自動表示を停止">✕</button><button class="grading-retry" onclick="app.retryGrading(${i})">再採点</button></div><div class="grading-body" id="grading-body-${i}"><div><div class="grading-result"></div></div></div>`;
                     }
-                    // Move existing disclosures to the final screen without losing their open state.
-                    if (row.parentElement !== container) container.prepend(row);
+                    const target = job.status === 'done' && job !== latest ? grouped : container;
+                    const changed = row.parentElement !== target || row.dataset.status !== job.status;
+                    if (row.parentElement !== target || (changed && job === latest)) target.prepend(row);
                     row.className = `grading-row grading-${job.status}${job.open ? ' is-open' : ''}`;
+                    if (changed) {
+                        void row.offsetWidth;
+                        row.classList.add(target === grouped ? 'grading-grouping' : 'grading-arriving');
+                    }
+                    row.dataset.status = job.status;
                     const toggle = row.querySelector('.grading-toggle');
                     toggle.disabled = job.status !== 'done';
                     toggle.setAttribute('aria-expanded', String(job.open));
-                    row.querySelector('.grading-badge').textContent = job.status === 'done' ? `採点完了 ${job.open ? '▴' : '▾'}` : job.status === 'error' ? 'エラー' : '採点待ち';
+                    row.querySelector('.grading-badge').textContent = job.status === 'done' ? `${job === latest ? '最新の' : ''}採点完了 ${job.open ? '▴' : '▾'}` : job.status === 'error' ? 'エラー' : '採点待ち';
                     row.querySelector('.grading-now').hidden = job.status !== 'done' || !job.deadline;
                     row.querySelector('.grading-cancel').hidden = !job.deadline;
                     row.querySelector('.grading-retry').hidden = job.status !== 'error';
                     const result = this.sessionResults[i];
                     row.dataset.tier = this.dopamineEnabled && result ? (result.score >= 90 ? 'excellent' : result.score >= 80 ? 'good' : result.score >= 60 ? 'partial' : 'retry') : '';
                     row.querySelector('.grading-body').inert = !job.open;
-                    row.querySelector('.grading-result').textContent = result ? `${result.score}点　${result.judgment}\n${result.question}\n\n${result.comment}\n\n【自分の回答】\n${result.userAnswer}\n\n【模範解答】\n${result.modelAnswer}` : '';
+                    row.querySelector('.grading-result').textContent = result ? `${result.score}点　${result.judgment}　${this.ratingLabel(result.rating || this.reviewRating(result.score))}\n${result.question}\n\n${result.comment}\n\n【自分の回答】\n${result.userAnswer}\n\n【模範解答】\n${result.modelAnswer}` : '';
                     this.updateCountdown(job);
                 });
             },
 
             updateWrittenSummary() {
                 if (!this.gradingEnded) return;
+                if (this.currentIndex < this.quizData.length && !this.paused) {
+                    this.gradingEnded = false; this.loadQuestion(); this.renderGradingStatuses(); return;
+                }
                 const done = this.gradingJobs.filter(job => job.status === 'done').length;
                 const pending = this.gradingJobs.filter(job => job.status === 'pending').length;
                 const errors = this.gradingJobs.filter(job => job.status === 'error').length;
-                const total = this.sessionResults.filter(Boolean).reduce((sum, result) => sum + result.score, 0);
-                document.getElementById('final-score').innerText = pending || errors ? `${done} / ${this.quizData.length}問 採点完了　採点待ち ${pending}問　エラー ${errors}問` : `${total} / ${this.quizData.length * 100}点　平均 ${Math.round(total / this.quizData.length)}点`;
-                document.getElementById('final-summary').innerText = pending ? '回答はすべて送信済みです。採点結果をここで確認できます。' : errors ? '採点できなかった問題は再採点できます。未採点を0点として総評には含めません。' : this.getOverallComment(Math.round(total / this.quizData.length));
+                const results = this.latestResults();
+                const scored = results.filter(result=>result.score != null);
+                const total = scored.reduce((sum,result)=>sum+result.score,0);
+                const average = scored.length ? Math.round(total/scored.length) : 0;
+                const counts = Object.fromEntries(['ng','unsure','ok'].map(rating=>[rating,scored.filter(result=>this.reviewRating(result.score)===rating).length]));
+                document.getElementById('final-score').innerText = pending || errors ? `${done} / ${this.quizData.length}問 採点完了　採点待ち ${pending}問　エラー ${errors}問` : `${total} / ${results.length * 100}点　平均 ${average}点`;
+                const summary = pending ? '採点結果を確認できます。再出題が必要な場合は、採点後に学習へ戻ります。' : errors ? '採点できなかった問題は再採点できます。未採点を0点として総評には含めません。' : this.getOverallComment(average);
+                document.getElementById('final-summary').innerHTML = `<p>${this.escapeHTML(summary)}</p>${this.renderRatingCounts(counts)}`;
                 document.getElementById('final-details').replaceChildren();
-                if (!pending) {
+                if (!pending && this.currentIndex >= this.quizData.length) {
                     this.sessionEntryId ||= `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-                    this.saveLearningHistory({ id: this.sessionEntryId, startedAt: this.sessionStartedAt, completedAt: new Date().toISOString(), mode: 'desc', dopamine: this.dopamineEnabled, subject: this.getSubjectName(), dataLabel: this.dataLabel, gradingModel: this.gradingModel, totalScore: total, maxScore: this.quizData.length * 100, averageScore: done ? Math.round(total / done) : 0, summary: errors ? `未採点 ${errors}問。総得点は採点済みの問題のみ。` : this.getOverallComment(Math.round(total / done)), results: this.gradingJobs.map(job => this.sessionResults[job.index] || { question: job.data.q, userAnswer: job.userAns, modelAnswer: job.data.ans, judgment: '未採点', comment: '採点エラー', score: null }) });
+                    this.saveLearningHistory({ id: this.sessionEntryId, startedAt:this.sessionStartedAt, completedAt:new Date().toISOString(), mode:'desc', subject:this.getSubjectName(), dataLabel:this.dataLabel, gradingModel:this.gradingModel, totalScore:total, maxScore:results.length*100, averageScore:average, summary:errors ? `未採点 ${errors}問。総得点は採点済みの問題のみ。` : this.getOverallComment(average), results, counts });
                 }
+                this.updateReviewButton();
             },
 
             showFeedback(title, detail, showNext = true) {
@@ -1914,7 +2139,7 @@ loc,q,ans,memo,dist1,dist2,dist3
 
             finishSession() {
                 const completedAt = new Date().toISOString();
-                const results = this.sessionResults.filter(Boolean);
+                const results = this.latestResults();
                 let totalScore;
                 let maxScore;
                 let averageScore;
@@ -1927,7 +2152,7 @@ loc,q,ans,memo,dist1,dist2,dist3
                     summary = this.getOverallComment(averageScore);
                 } else {
                     totalScore = results.filter(result => result.correct).length;
-                    maxScore = this.quizData.length;
+                    maxScore = results.length;
                     averageScore = maxScore ? Math.round((totalScore / maxScore) * 100) : 0;
                     summary = averageScore >= 80
                         ? "よく理解できています。間違えた問題だけを復習すると効率的です。"
@@ -1950,10 +2175,15 @@ loc,q,ans,memo,dist1,dist2,dist3
                     summary,
                     results
                 };
+                if (this.mode === 'flash') {
+                    entry.counts = Object.fromEntries(['ng','unsure','ok'].map(rating=>[rating,results.filter(result=>result.rating===rating).length]));
+                    entry.summary = `NG ${entry.counts.ng}問・迷った ${entry.counts.unsure}問・OK ${entry.counts.ok}問`;
+                }
                 this.saveLearningHistory(entry);
                 this.finalEntry = entry;
                 this.renderFinalResult(entry);
                 this.showScreen('result-screen');
+                this.updateReviewButton();
             },
 
             renderFinalResult(entry) {
@@ -1973,6 +2203,12 @@ loc,q,ans,memo,dist1,dist2,dist3
                             <p><strong>模範解答:</strong> ${this.escapeHTML(result.modelAnswer)}</p>
                         </div>`).join("");
                 } else {
+                    if (entry.mode === 'flash') {
+                        finalScore.innerText = `${entry.results.length}問の結果`;
+                        finalSummary.innerHTML = this.renderRatingCounts(entry.counts) + '<p>🔴 NG・🟡 迷ったのカードは、もう一回取り組めます。</p>';
+                        finalDetails.innerHTML = this.renderFlashTable(entry.results);
+                        this.updateReviewButton(); return;
+                    }
                     finalScore.innerText = `${entry.maxScore}問中 ${entry.totalScore}問 正解`;
                     finalSummary.innerHTML = `<p>${this.escapeHTML(entry.summary)}</p>${entry.mode === 'dopamine' ? `<p>🔥 最高 ${entry.bestCombo} COMBO</p>` : ''}`;
                     finalDetails.innerHTML = "";
@@ -1982,12 +2218,12 @@ loc,q,ans,memo,dist1,dist2,dist3
             readLearningSession() {
                 try {
                     const saved = JSON.parse(localStorage.getItem(learningSessionStorageKey) || 'null');
-                    if (!saved || saved.version !== 1 || !['choice','dopamine','desc'].includes(saved.mode) || !Array.isArray(saved.quizData) || !saved.quizData.length || !Number.isInteger(saved.currentIndex) || saved.currentIndex < 0 || saved.currentIndex > saved.quizData.length || !Array.isArray(saved.results) || !Array.isArray(saved.jobs)) return null;
+                    if (!saved || saved.version !== 1 || !['choice','dopamine','desc','flash'].includes(saved.mode) || !Array.isArray(saved.quizData) || !saved.quizData.length || !Number.isInteger(saved.currentIndex) || saved.currentIndex < 0 || saved.currentIndex > saved.quizData.length || !Array.isArray(saved.results) || !Array.isArray(saved.jobs)) return null;
                     if (!saved.quizData.every(q => q && typeof q.q === 'string' && typeof q.ans === 'string')) return null;
-                    if (saved.mode !== 'desc' && (!Array.isArray(saved.preparedChoices) || saved.preparedChoices.length !== saved.quizData.length || !saved.preparedChoices.every(choices => Array.isArray(choices) && choices.length === 3 && choices.every(c => typeof c === 'string')))) return null;
+                    if (saved.mode !== 'desc' && saved.mode !== 'flash' && (!Array.isArray(saved.preparedChoices) || saved.preparedChoices.length !== saved.quizData.length || !saved.preparedChoices.every(choices => choices === null || (Array.isArray(choices) && choices.length === 3 && choices.every(c => typeof c === 'string'))) || (saved.screen === 'quiz-screen' && !saved.preparedChoices[saved.currentIndex]))) return null;
                     if (saved.jobs.length > saved.quizData.length || !saved.jobs.every((job,i) => job && job.index === i && typeof job.userAns === 'string' && ['pending','done','error'].includes(job.status))) return null;
                     if (!['quiz-screen','result-screen'].includes(saved.screen) || (saved.screen === 'quiz-screen' && saved.currentIndex === saved.quizData.length)) return null;
-                    if (saved.mode !== 'desc' && (!Array.isArray(saved.currentChoices) || saved.currentChoices.length !== 3 || !Number.isInteger(saved.correctIndex) || saved.correctIndex < 0 || saved.correctIndex > 2)) return null;
+                    if (saved.mode !== 'desc' && saved.mode !== 'flash' && (!Array.isArray(saved.currentChoices) || saved.currentChoices.length !== 3 || !Number.isInteger(saved.correctIndex) || saved.correctIndex < 0 || saved.correctIndex > 2)) return null;
                     if (saved.jobs.some(job => job.status === 'done' && (!saved.results[job.index] || !Number.isFinite(saved.results[job.index].score)))) return null;
                     return saved;
                 } catch (_) { return null; }
@@ -1996,7 +2232,7 @@ loc,q,ans,memo,dist1,dist2,dist3
             updateResumePanel() {
                 const saved = this.readLearningSession();
                 document.getElementById('resume-panel').classList.toggle('hidden', !saved);
-                if (saved) document.getElementById('resume-description').innerText = `保存中の学習：${saved.mode === 'desc' ? '記述' : '3択'}　${Math.min(saved.currentIndex + 1,saved.quizData.length)} / ${saved.quizData.length}問`;
+                if (saved) document.getElementById('resume-description').innerText = `保存中の学習：${saved.mode === 'desc' ? '記述' : saved.mode === 'flash' ? 'フラッシュカード' : '3択'}　${Math.min(saved.currentIndex + 1,saved.quizData.length)} / ${saved.quizData.length}問`;
             },
 
             clearLearningSession() {
@@ -2007,6 +2243,8 @@ loc,q,ans,memo,dist1,dist2,dist3
 
             saveLearningSession() {
                 if (!this.sessionActive) return;
+                // Keep the last playable snapshot while a not-yet-buffered question loads.
+                if (this.activeScreen === 'preparation-screen') return;
                 try {
                     // Persist only study data. Never serialize AI settings, credentials or timers.
                     const snapshot = {
@@ -2014,12 +2252,13 @@ loc,q,ans,memo,dist1,dist2,dist3
                         quizData:this.quizData, dataLabel:this.dataLabel, subject:this.subjectProfile,
                         currentIndex:this.currentIndex, score:this.score, results:this.sessionResults,
                         preparedChoices:this.preparedChoices, currentChoices:this.currentChoices, correctIndex:this.correctIndex,
+                        sessionReview:this.sessionReview, menuQuizData:this.menuQuizData, flashRevealed:this.flashRevealed,
                         draft:document.getElementById('user-answer').value, startedAt:this.sessionStartedAt,
                         combo:this.combo, bestCombo:this.bestCombo, gradingEnded:this.gradingEnded,
                         sessionEntryId:this.sessionEntryId, finalEntry:this.finalEntry,
                         screen:this.paused ? this.resumeScreen : this.activeScreen,
                         nextRemaining:this.nextDeadline == null ? this.nextRemaining : Math.max(0,this.nextDeadline-Date.now()),
-                        jobs:this.gradingJobs.map(job => ({ index:job.index, userAns:job.userAns, status:job.status, open:job.open,
+                        jobs:this.gradingJobs.map(job => ({ index:job.index, userAns:job.userAns, status:job.status, open:job.open, completedOrder:job.completedOrder, reviewScheduled:job.reviewScheduled,
                             revealRemaining:job.deadline == null ? (job.revealRemaining ?? null) : Math.max(0,job.deadline-Date.now()) }))
                     };
                     localStorage.setItem(learningSessionStorageKey,JSON.stringify(snapshot));
@@ -2043,12 +2282,15 @@ loc,q,ans,memo,dist1,dist2,dist3
                 clearTimeout(this.nextTimer); this.clearRevealTimers();
                 clearInterval(this.nextCountdownTimer); this.clearRewardEffects();
                 this.dopamineEnabled = this.dopaminePreference;
-                this.mode = saved.mode === 'desc' ? 'desc' : this.dopamineEnabled ? 'dopamine' : 'choice';
-                this.quizData = saved.quizData; this.dataLabel = saved.dataLabel; this.subjectProfile = saved.subject;
+                this.mode = ['desc','flash'].includes(saved.mode) ? saved.mode : this.dopamineEnabled ? 'dopamine' : 'choice';
+                this.quizData = saved.quizData.map((q,i)=>({...q,cardId:q.cardId ?? `card-${i}`})); this.dataLabel = saved.dataLabel; this.subjectProfile = saved.subject;
                 this.currentIndex = saved.currentIndex; this.score = saved.score; this.sessionResults = saved.results;
                 this.sessionStartedAt = saved.startedAt; this.sessionEntryId = saved.sessionEntryId;
                 this.combo = saved.combo; this.bestCombo = saved.bestCombo;
                 this.preparedChoices = saved.preparedChoices; this.gradingEnded = !!saved.gradingEnded;
+                this.sessionReview = this.normalizeReviewSettings(saved.sessionReview);
+                this.menuQuizData = saved.menuQuizData || this.menuQuizData || this.quizData.filter((q,i,a)=>a.findIndex(other=>other.cardId===q.cardId)===i);
+                if (this.mode !== 'desc' && this.mode !== 'flash') this.startChoicePrefetch(runId);
                 this.finalEntry = saved.finalEntry;
                 this.gradingJobs = saved.jobs.map(job => ({ ...job, runId, data:{...saved.quizData[job.index]}, settings:{...this.getCurrentAISettings()}, subject:saved.subject, started:false, deadline:null }));
                 this.gradingActive = 0; this.paused = true; this.sessionActive = true;
@@ -2064,7 +2306,8 @@ loc,q,ans,memo,dist1,dist2,dist3
                 if (this.resumeScreen === 'quiz-screen') {
                     await this.loadQuestion();
                     document.getElementById('user-answer').value = saved.draft || '';
-                    if (this.mode !== 'desc') {
+                    if (this.mode === 'flash') { if (saved.flashRevealed) { this.paused = false; this.revealFlash(); this.paused = true; } }
+                    else if (this.mode !== 'desc') {
                         this.currentChoices = saved.currentChoices; this.correctIndex = saved.correctIndex;
                         const result = this.sessionResults[this.currentIndex];
                         document.querySelectorAll('.choice-btn').forEach((button,i) => {
@@ -2091,6 +2334,7 @@ loc,q,ans,memo,dist1,dist2,dist3
                 this.clearRewardEffects();
                 this.paused = false;
                 this.showScreen('menu-screen'); document.body.classList.toggle('dopamine-theme',this.dopaminePreference);
+                if (this.menuQuizData) { this.quizData = this.menuQuizData; this.menuQuizData = null; }
                 this.updateResumePanel();
             },
 
@@ -2144,6 +2388,7 @@ loc,q,ans,memo,dist1,dist2,dist3
                 if (!this.paused) return;
                 this.paused = false;
                 this.showScreen(this.resumeScreen);
+                if (this.mode === 'desc' && this.gradingEnded && this.currentIndex < this.quizData.length) { this.gradingEnded = false; this.loadQuestion(); }
                 if (this.nextRemaining != null) { this.scheduleNextQuestion(this.nextRemaining); this.nextRemaining = null; }
                 this.gradingJobs.forEach(job => {
                     if (job.revealRemaining != null && job.status === 'done') this.scheduleReveal(job, job.revealRemaining);
@@ -2174,6 +2419,7 @@ loc,q,ans,memo,dist1,dist2,dist3
                 document.getElementById('settings-panel').classList.add('hidden');
                 document.getElementById('history-panel').classList.add('hidden');
                 this.showScreen('menu-screen');
+                if (this.menuQuizData) { this.quizData = this.menuQuizData; this.menuQuizData = null; }
                 this.updateResumePanel();
                 document.body.classList.toggle('dopamine-theme',this.dopaminePreference);
             }
